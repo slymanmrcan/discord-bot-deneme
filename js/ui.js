@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 
 export class UIManager {
     constructor() {
+        // Get all elements
         this.elements = {
             botToken: document.getElementById('botToken'),
             botList: document.getElementById('botList'),
@@ -20,12 +21,34 @@ export class UIManager {
             sendLoader: document.getElementById('sendLoader'),
             sendText: document.getElementById('sendText')
         };
+
+        // Initialize file selection
+        this._initFileUpload();
+    }
+
+    _initFileUpload() {
+        const { mediaFile, selectFileBtn, clearMediaFileBtn } = this.elements;
         
-        // Initialize file selection button
-        if (this.elements.selectFileBtn && this.elements.mediaFile) {
-            this.elements.selectFileBtn.addEventListener('click', (e) => {
+        if (!mediaFile || !selectFileBtn) return;
+        
+        // Click handler for file selection button
+        selectFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            mediaFile.click();
+        });
+        
+        // File selection change handler
+        mediaFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            this.updateMediaFileDisplay(file);
+        });
+        
+        // Clear file button handler
+        if (clearMediaFileBtn) {
+            clearMediaFileBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.elements.mediaFile.click();
+                mediaFile.value = '';
+                this.updateMediaFileDisplay(null);
             });
         }
     }
@@ -114,13 +137,21 @@ export class UIManager {
 
     // Media File Handling
     updateMediaFileDisplay(file) {
+        const { selectedFileName, clearMediaFileBtn, mediaFile } = this.elements;
+        
+        if (!selectedFileName || !clearMediaFileBtn) return;
+        
         if (file) {
-            this.elements.selectedFileName.textContent = file.name;
-            this.elements.clearMediaFileBtn.style.display = 'inline-flex';
+            console.log('Displaying file:', file.name);
+            selectedFileName.textContent = file.name;
+            selectedFileName.title = file.name;
+            clearMediaFileBtn.style.display = 'inline-flex';
         } else {
-            this.elements.mediaFile.value = '';
-            this.elements.selectedFileName.textContent = 'Dosya seçilmedi';
-            this.elements.clearMediaFileBtn.style.display = 'none';
+            console.log('Clearing file selection');
+            if (mediaFile) mediaFile.value = '';
+            selectedFileName.textContent = 'Dosya seçilmedi';
+            selectedFileName.title = '';
+            clearMediaFileBtn.style.display = 'none';
         }
     }
 
