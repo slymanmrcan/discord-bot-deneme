@@ -28,14 +28,22 @@ export class TelegramAPI {
     }
 
     async sendMedia(chatId, file, caption = '') {
-        const formData = new FormData();
-        formData.append('chat_id', chatId);
-        if (caption) formData.append('caption', caption);
+        try {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            if (caption) formData.append('caption', caption);
 
-        const { endpoint, field } = this._getMediaEndpoint(file.type);
-        formData.append(field, file, file.name);
+            const { endpoint, field } = this._getMediaEndpoint(file.type);
+            formData.append(field, file, file.name);
 
-        return this._makeRequest(`/${endpoint}`, 'POST', formData);
+            console.log(`Sending media: ${file.name} (${file.type}) as ${field}`);
+            const result = await this._makeRequest(`/${endpoint}`, 'POST', formData);
+            console.log('Media sent successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error in sendMedia:', error);
+            throw error;
+        }
     }
 
     async getFileUrl(fileId) {
@@ -57,27 +65,42 @@ export class TelegramAPI {
         }
     }
 
-    async _makeRequest(endpoint, method = 'GET', body = null) {
+    async _makeRequest(endpoint, method = 'GET', data = null) {
         const url = `${this.baseUrl}${endpoint}`;
         const options = {
             method,
-            headers: {}
+            headers: {},
+            // Important: Don't set credentials for Telegram API
+            credentials: 'omit'
         };
 
-        if (body) {
-            if (body instanceof FormData) {
-                options.body = body;
-            } else {
-                options.headers['Content-Type'] = 'application/json';
-                options.body = JSON.stringify(body);
-            }
-        }
-
         try {
-            const response = await fetch(url, options);
-            return await response.json();
+            let response;
+            
+            if (data instanceof FormData) {
+                // For file uploads, let the browser set the content type with boundary
+                options.body = data;
+                response = await fetch(url, options);
+            } else if (data) {
+                // For JSON data
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(data);
+                response = await fetch(url, options);
+            } else {
+                // For simple GET requests
+                response = await fetch(url, options);
+            }
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                console.error('Telegram API error:', result);
+                throw new Error(result.description || 'Unknown error from Telegram API');
+            }
+            
+            return result;
         } catch (error) {
-            console.error(`Error making request to ${endpoint}:`, error);
+            console.error('API request failed:', error);
             throw error;
         }
     }

@@ -158,6 +158,14 @@ export class UIManager {
     }
 
     getSelectedFile() {
-        return this.elements.mediaFile.files[0] || null;
+        const fileInput = this.elements.mediaFile;
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            console.log('No file selected');
+            return null;
+        }
+        
+        const file = fileInput.files[0];
+        console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
+        return file;
     }
 }
