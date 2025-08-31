@@ -69,6 +69,14 @@
                 </div>
 
                 <div class="send-area" id="sendArea" style="display: none;">
+                    <!-- Test File Input -->
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>Test Dosya Yükleme:</h4>
+                        <input type="file" id="testFileInput" class="form-control" style="margin-bottom: 10px;">
+                        <button onclick="testFileUpload()" class="btn btn-secondary">Test Et</button>
+                        <div id="testResult" style="margin-top: 10px; color: #28a745; font-weight: bold;"></div>
+                    </div>
+
                     <div class="file-upload-section">
                         <input type="file" id="mediaFile" accept="image/*,audio/*,video/*,application/pdf" style="display: none;">
                         <button class="btn btn-secondary" id="selectFileBtn" style="width: 100%;">
@@ -91,6 +99,34 @@
             </div>
         </div>
     </div>
+
+    <!-- Test Function -->
+    <script>
+    function testFileUpload() {
+        const fileInput = document.getElementById('testFileInput');
+        const resultDiv = document.getElementById('testResult');
+        
+        if (!fileInput.files || fileInput.files.length === 0) {
+            resultDiv.textContent = 'Lütfen önce bir dosya seçin';
+            resultDiv.style.color = '#dc3545';
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        const fileInfo = `
+            Dosya Adı: ${file.name}
+            Boyut: ${(file.size / 1024).toFixed(2)} KB
+            Tür: ${file.type || 'Bilinmiyor'}
+            Son Değişiklik: ${new Date(file.lastModified).toLocaleString()}
+        `;
+        
+        resultDiv.textContent = `✅ Dosya başarıyla seçildi!\n${fileInfo}`;
+        resultDiv.style.color = '#28a745';
+        resultDiv.style.whiteSpace = 'pre-line';
+        
+        console.log('Test file selected:', file);
+    }
+    </script>
 
     <!-- JavaScript Modules (loaded as modules to support ES6 imports) -->
     <script type="module" src="js/main.js"></script>
