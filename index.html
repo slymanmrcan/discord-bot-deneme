@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Yöneticisi</title>
+    <style>
+        /* Önceki CSS kodlarınız olduğu gibi kalacak, sadece bazı eklemeler/düzeltmeler */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 30px;
+        }
+
+        .chat-area {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .bot-list {
+            margin-bottom: 30px;
+        }
+
+        .bot-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .bot-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .bot-item.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .bot-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .bot-username {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .chat-messages {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+            border: 1px solid #e9ecef;
+        }
+
+        .message {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .message-time {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-left: auto;
+        }
+
+        .message-text {
+            color: #333;
+        }
+
+        .send-area {
+            display: flex;
+            gap: 12px;
+            align-items: end; 
+        }
+
+        .send-area .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .send-area {
+                flex-direction: column; 
+                align-items: stretch;
+            }
+
+            .file-upload-section {
+                flex-basis: auto !important; 
+                width: 100%;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6c757d;
+            padding: 40px 20px;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+
+        /* Yeni eklenecek CSS */
+        .file-upload-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-basis: 150px; 
+            min-width: 120px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Telegram Bot Yöneticisi</h1>
+            <p>Botlarınızı yönetin ve mesajlaşın</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="form-group">
+                    <label>Bot Token Ekle</label>
+                    <input type="text" id="botToken" placeholder="Bot token'ınızı girin...">
+                </div>
+                
+                <button class="btn" onclick="addBot()">
+                    <span id="addBotText">Bot Ekle</span>
+                    <span id="addBotLoader" class="loading" style="display: none;"></span>
+                </button>
+
+                <div class="status" id="status"></div>
+
+                <div class="bot-list">
+                    <h3 style="margin-bottom: 15px; color: #333;">Botlarım</h3>
+                    <div id="botList">
+                        <!-- Botlar buraya JS ile yüklenecek -->
+                        <div class="empty-state">
+                            <h4>Henüz bot eklenmemiş</h4>
+                            <p>Yukarıdan bot token'ı ekleyerek başlayın</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div id="chatHeader" style="display: none; margin-bottom: 20px;">
+                    <h3 id="selectedBotName">Bot Seç</h3>
+                    <button class="btn btn-secondary" onclick="refreshMessages()" id="refreshBtn">
+                        🔄 Mesajları Yenile
+                    </button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <h4>Bot seçin</h4>
+                        <p>Sol taraftan bir bot seçerek mesajlaşmaya başlayın</p>
+                    </div>
+                </div>
+
+                <div class="send-area" id="sendArea" style="display: none;">
+                    <!-- Yeni eklenen dosya yükleme alanı -->
+                    <div class="file-upload-section">
+                        <input type="file" id="mediaFile" accept="image/*,audio/*,video/*,application/pdf" style="display: none;">
+                        <button class="btn btn-secondary" onclick="document.getElementById('mediaFile').click()" style="width: 100%;">
+                            📎 Dosya Ekle
+                        </button>
+                        <div id="selectedFileName" style="font-size: 0.9em; color: #555; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">Dosya seçilmedi</div>
+                        <button class="btn btn-danger" id="clearMediaFileBtn" onclick="clearMediaFile()" style="font-size: 12px; padding: 6px 12px; display: none;">
+                            ✖️ Kaldır
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <textarea id="messageText" placeholder="Mesajınızı yazın..." rows="3"></textarea>
+                    </div>
+                    <button class="btn" onclick="sendMessage()">
+                        <span id="sendText">Gönder</span>
+                        <span id="sendLoader" class="loading" style="display: none;"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global değişkenler
+        let bots = [];
+        let selectedBot = null;
+        const LOCAL_STORAGE_KEY = 'telegramBots'; 
+        let selectedMediaFile = null; 
+        let lastUpdateId = 0; // Son alınan güncellemenin ID'si, offset için kullanılacak
+        const mediaUrlCache = new Map(); // Medya URL'lerini file_id'ye göre önbelleğe alacak Map
+
+        // Helper: localStorage'a botları kaydet
+        function saveBotsToLocalStorage() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(bots));
+        }
+
+        // Helper: localStorage'dan botları yükle
+        function loadBotsFromLocalStorage() {
+            const storedBots = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (storedBots) {
+                try {
+                    bots = JSON.parse(storedBots);
+                } catch (e) {
+                    console.error("Stored bots data corrupted, resetting:", e);
+                    bots = [];
+                }
+            } else {
+                bots = [];
+            }
+        }
+
+        // Helper: Durum mesajlarını göster
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // Helper: Yüklenme durumunu yönet
+        function setLoading(elementId, textId, loading) {
+            const loader = document.getElementById(elementId);
+            const text = document.getElementById(textId);
+            if (loading) {
+                loader.style.display = 'inline-block';
+                text.style.display = 'none';
+            } else {
+                loader.style.display = 'none';
+                text.style.display = 'inline';
+            }
+        }
+
+        // Bot ekleme fonksiyonu
+        async function addBot() {
+            const token = document.getElementById('botToken').value.trim();
+            if (!token) {
+                showStatus('Lütfen bot token\'ını girin', 'error');
+                return;
+            }
+
+            setLoading('addBotLoader', 'addBotText', true);
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+                const data = await response.json();
+                
+                if (data.ok) {
+                    const bot = {
+                        token: token,
+                        id: data.result.id,
+                        name: data.result.first_name,
+                        username: data.result.username
+                    };
+
+                    if (bots.find(b => b.id === bot.id)) {
+                        showStatus('Bu bot zaten eklenmiş', 'error');
+                        setLoading('addBotLoader', 'addBotText', false);
+                        return;
+                    }
+
+                    bots.push(bot);
+                    saveBotsToLocalStorage(); 
+                    updateBotList();
+                    document.getElementById('botToken').value = '';
+                    showStatus(`${bot.name} (@${bot.username}) başarıyla eklendi`, 'success');
+                } else {
+                    showStatus('Geçersiz bot token\'ı veya API hatası: ' + (data.description || 'Bilinmeyen Hata'), 'error');
+                }
+            } catch (error) {
+                showStatus('Bot eklenirken hata oluştu: ' + error.message, 'error');
+            } finally {
+                setLoading('addBotLoader', 'addBotText', false);
+            }
+        }
+
+        // Bot listesini güncelleme fonksiyonu
+        function updateBotList() {
+            const botList = document.getElementById('botList');
+            if (bots.length === 0) {
+                botList.innerHTML = `
+                    <div class="empty-state">
+                        <h4>Henüz bot eklenmemiş</h4>
+                        <p>Yukarıdan bot token'ı ekleyerek başlayın</p>
+                    </div>
+                `;
+                return;
+            }
+
+            botList.innerHTML = bots.map(bot => `
+                <div class="bot-item ${selectedBot && selectedBot.id === bot.id ? 'active' : ''}" 
+                     onclick="selectBot('${bot.id}')">
+                    <div class="bot-name">${bot.name}</div>
+                    <div class="bot-username">@${bot.username}</div>
+                    <button class="btn btn-danger" style="margin-top: 10px; font-size: 12px; padding: 6px 12px;" 
+                            onclick="removeBot('${bot.id}', event)">
+                        🗑️ Sil
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Bot silme fonksiyonu
+        function removeBot(botId, event) {
+            event.stopPropagation();
+            if (confirm('Bu botu silmek istediğinizden emin misiniz?')) {
+                bots = bots.filter(bot => bot.id !== parseInt(botId));
+                saveBotsToLocalStorage(); 
+
+                if (selectedBot && selectedBot.id === parseInt(botId)) {
+                    selectedBot = null;
+                    lastUpdateId = 0; // Bot silindiğinde son güncelleme ID'sini sıfırla
+                    document.getElementById('chatHeader').style.display = 'none';
+                    document.getElementById('sendArea').style.display = 'none';
+                    document.getElementById('chatMessages').innerHTML = `
+                        <div class="empty-state">
+                            <h4>Bot seçin</h4>
+                            <p>Sol taraftan bir bot seçerek mesajlaşmaya başlayın</p>
+                        </div>
+                    `;
+                }
+                updateBotList();
+                showStatus('Bot silindi', 'success');
+            }
+        }
+
+        // Bot seçme fonksiyonu
+        function selectBot(botId) {
+            selectedBot = bots.find(bot => bot.id === parseInt(botId));
+            if (selectedBot) {
+                document.getElementById('selectedBotName').textContent = selectedBot.name;
+                document.getElementById('chatHeader').style.display = 'flex';
+                document.getElementById('chatHeader').style.justifyContent = 'space-between';
+                document.getElementById('chatHeader').style.alignItems = 'center';
+                document.getElementById('sendArea').style.display = 'flex';
+                updateBotList(); 
+                lastUpdateId = 0; // Yeni bot seçildiğinde lastUpdateId'yi sıfırla ki tüm mesajları çeksin
+                refreshMessages(); 
+            }
+        }
+
+        // Mesajları yenileme (çekme) fonksiyonu
+        async function refreshMessages() {
+            if (!selectedBot) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            // Yükleme sırasında mevcut mesajları göstermeye devam et, sadece yükleniyor mesajını ekle
+            // chatMessages.innerHTML = `
+            //     <div class="empty-state">
+            //         <h4>Mesajlar yükleniyor...</h4>
+            //         <span class="loading" style="display: inline-block; margin-top: 10px;"></span>
+            //     </div>
+            // `;
+
+            try {
+                // Offset kullanarak sadece yeni mesajları iste
+                const response = await fetch(`https://api.telegram.org/bot${selectedBot.token}/getUpdates?offset=${lastUpdateId + 1}`);
+                const data = await response.json();
+                
+                if (data.ok && data.result.length > 0) {
+                    await displayMessages(data.result); 
+                    // En büyük update_id'yi bul ve lastUpdateId'yi güncelle
+                    lastUpdateId = Math.max(lastUpdateId, ...data.result.map(update => update.update_id));
+                } else if (lastUpdateId === 0) { // İlk yüklemede hiç mesaj yoksa bu mesajı göster
+                    chatMessages.innerHTML = `
+                        <div class="empty-state">
+                            <h4>Henüz mesaj yok</h4>
+                            <p>Bu bot ile henüz mesajlaşma geçmişi bulunmuyor</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showStatus('Mesajlar yüklenirken hata oluştu: ' + error.message, 'error');
+                if (lastUpdateId === 0) { // İlk yüklemede hata olursa göster
+                    chatMessages.innerHTML = `
+                        <div class="empty-state">
+                            <h4>Mesaj yüklenirken hata oluştu</h4>
+                            <p>Lütfen daha sonra tekrar deneyin.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Yeni: file_id'den dosya indirme URL'si alma fonksiyonu (Önbellekleme eklendi)
+        async function getFileDownloadUrl(botToken, fileId) {
+            // Önce önbellekte var mı kontrol et
+            if (mediaUrlCache.has(fileId)) {
+                return mediaUrlCache.get(fileId);
+            }
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+                const data = await response.json();
+                if (data.ok && data.result && data.result.file_path) {
+                    const fileUrl = `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`;
+                    mediaUrlCache.set(fileId, fileUrl); // Önbelleğe kaydet
+                    return fileUrl;
+                } else {
+                    console.error('Dosya yolu alınamadı:', data.description || 'Bilinmeyen Hata', 'File ID:', fileId);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Dosya yolu alınırken hata oluştu:', error, 'File ID:', fileId);
+                return null;
+            }
+        }
+
+
+        // Mesajları görüntüleme fonksiyonu (Medya URL'leri için güncellendi)
+        async function displayMessages(updates) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Eğer ilk kez mesajlar yükleniyorsa tüm chatMessages'i temizle
+            if (lastUpdateId === 0 && updates.length > 0) {
+                 chatMessages.innerHTML = '';
+            } else if (updates.length === 0 && lastUpdateId === 0) {
+                 // Hiç mesaj yoksa ve ilk kez çekiliyorsa empty state'i göster
+                 chatMessages.innerHTML = `
+                        <div class="empty-state">
+                            <h4>Henüz mesaj yok</h4>
+                            <p>Bu bot ile henüz mesajlaşma geçmişi bulunmuyor</p>
+                        </div>
+                    `;
+                 return;
+            }
+
+            // Tüm medya URL'lerini eş zamanlı olarak almak için Promise.all kullanıyoruz
+            const messagesPromises = updates.map(async update => {
+                if (update.message) {
+                    const message = update.message;
+                    const date = new Date(message.date * 1000);
+                    let messageContent = '';
+                    let fileUrl = null;
+                    let fileId = null;
+
+                    if (message.text) {
+                        messageContent = message.text;
+                    } else if (message.photo) {
+                        fileId = message.photo[message.photo.length - 1].file_id;
+                        fileUrl = await getFileDownloadUrl(selectedBot.token, fileId);
+                        if (fileUrl) {
+                            messageContent = `<img src="${fileUrl}" alt="Fotoğraf" style="max-width:100%; height:auto; border-radius: 8px;">`;
+                        } else {
+                            messageContent = `Fotoğraf yüklenemedi. File ID: ${fileId}`;
+                        }
+                        if (message.caption) messageContent += `<p>${message.caption}</p>`;
+                    } else if (message.video) {
+                        fileId = message.video.file_id;
+                        fileUrl = await getFileDownloadUrl(selectedBot.token, fileId);
+                        if (fileUrl) {
+                            messageContent = `<video controls src="${fileUrl}" style="max-width:100%; height:auto; border-radius: 8px;"></video>`;
+                        } else {
+                            messageContent = `Video yüklenemedi. File ID: ${fileId}`;
+                        }
+                        if (message.caption) messageContent += `<p>${message.caption}</p>`;
+                    } else if (message.audio) {
+                        fileId = message.audio.file_id;
+                        fileUrl = await getFileDownloadUrl(selectedBot.token, fileId);
+                        if (fileUrl) {
+                            messageContent = `<audio controls src="${fileUrl}" style="width:100%;"></audio>`;
+                        } else {
+                            messageContent = `Ses dosyası yüklenemedi. File ID: ${fileId}`;
+                        }
+                        if (message.caption) messageContent += `<p>${message.caption}</p>`;
+                    } else if (message.document) {
+                         fileId = message.document.file_id;
+                         fileUrl = await getFileDownloadUrl(selectedBot.token, fileId);
+                         if (fileUrl) {
+                            messageContent = `<a href="${fileUrl}" target="_blank" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #667eea;"><span style="font-size: 1.5em;">📄</span>${message.document.file_name}</a>`;
+                         } else {
+                             messageContent = `Belge yüklenemedi. File ID: ${fileId}`;
+                         }
+                         if (message.caption) messageContent += `<p>${message.caption}</p>`;
+                    }
+                    // Not: Diğer medya türleri (sticker, voice, vb.) için de benzer şekilde eklenebilir.
+
+                    return {
+                        senderName: message.from.first_name,
+                        senderUsername: message.from.username || 'N/A',
+                        time: date.toLocaleString('tr-TR'),
+                        content: messageContent
+                    };
+                }
+                return null; 
+            });
+
+            const messagesToRender = await Promise.all(messagesPromises);
+
+            messagesToRender.filter(Boolean).forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">${msg.senderName} (@${msg.senderUsername})</span>
+                        <span class="message-time">${msg.time}</span>
+                    </div>
+                    <div class="message-text">${msg.content}</div>
+                `;
+                chatMessages.appendChild(messageDiv);
+            });
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Yeni: Seçilen medya dosyasını temizleme
+        function clearMediaFile() {
+            selectedMediaFile = null;
+            document.getElementById('mediaFile').value = ''; 
+            document.getElementById('selectedFileName').textContent = 'Dosya seçilmedi';
+            document.getElementById('clearMediaFileBtn').style.display = 'none';
+        }
+
+        // Yeni: Medya dosyası seçildiğinde
+        document.getElementById('mediaFile').addEventListener('change', function(event) {
+            if (event.target.files.length > 0) {
+                selectedMediaFile = event.target.files[0];
+                document.getElementById('selectedFileName').textContent = selectedMediaFile.name;
+                document.getElementById('clearMediaFileBtn').style.display = 'inline-flex';
+            } else {
+                clearMediaFile();
+            }
+        });
+
+        // Mesaj gönderme fonksiyonu (hem metin hem de medya için güncellendi)
+        async function sendMessage() {
+            if (!selectedBot) return;
+
+            const messageText = document.getElementById('messageText').value.trim();
+            
+            if (!messageText && !selectedMediaFile) {
+                showStatus('Lütfen mesaj yazın veya bir dosya seçin', 'error');
+                return;
+            }
+
+            setLoading('sendLoader', 'sendText', true);
+
+            try {
+                // Sadece son etkileşimden chatId alıyoruz. Bu hala tam güvenli değil.
+                // Gerçek bir uygulamada, kullanıcının belirli bir sohbeti/kullanıcıyı seçmesi daha doğru olur.
+                const updatesResponse = await fetch(`https://api.telegram.org/bot${selectedBot.token}/getUpdates`);
+                const updatesData = await updatesResponse.json();
+                
+                let chatId = null;
+                if (updatesData.ok && updatesData.result.length > 0) {
+                    const lastUpdate = updatesData.result[updatesData.result.length - 1];
+                    if (lastUpdate.message) {
+                        chatId = lastUpdate.message.chat.id;
+                    } else if (lastUpdate.channel_post) { 
+                        chatId = lastUpdate.channel_post.chat.id;
+                    }
+                }
+
+                if (!chatId) {
+                    showStatus('Chat ID bulunamadı. Önce bota özel bir mesaj gönderin veya bir gruba ekleyin.', 'error');
+                    return; 
+                }
+
+                let sendSuccess = false;
+
+                if (selectedMediaFile) {
+                    sendSuccess = await sendMedia(chatId, selectedMediaFile, messageText);
+                    if (sendSuccess) {
+                        clearMediaFile(); 
+                        document.getElementById('messageText').value = ''; 
+                    }
+                } else if (messageText) { 
+                    const sendResponse = await fetch(`https://api.telegram.org/bot${selectedBot.token}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId, text: messageText })
+                    });
+                    const sendData = await sendResponse.json();
+                    if (sendData.ok) {
+                        document.getElementById('messageText').value = '';
+                        showStatus('Mesaj gönderildi', 'success');
+                        sendSuccess = true;
+                    } else {
+                        showStatus('Metin mesajı gönderilemedi: ' + sendData.description, 'error');
+                    }
+                }
+
+                if (sendSuccess) {
+                    // Gönderim sonrası, API'nin mesajı işlemesi için kısa bir gecikme ile mesajları yenile
+                    setTimeout(refreshMessages, 1000); 
+                }
+
+            } catch (error) {
+                showStatus('Mesaj/Dosya gönderirken hata oluştu: ' + error.message, 'error');
+            } finally {
+                setLoading('sendLoader', 'sendText', false);
+            }
+        }
+
+        // Yeni: Medya gönderme fonksiyonu
+        async function sendMedia(chatId, file, caption = '') {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            if (caption) {
+                formData.append('caption', caption);
+            }
+
+            let apiMethod = '';
+            let fileFieldName = ''; 
+
+            if (file.type.startsWith('image/')) {
+                apiMethod = 'sendPhoto';
+                fileFieldName = 'photo';
+            } else if (file.type.startsWith('audio/')) {
+                apiMethod = 'sendAudio';
+                fileFieldName = 'audio';
+            } else if (file.type.startsWith('video/')) {
+                apiMethod = 'sendVideo';
+                fileFieldName = 'video';
+            } else {
+                apiMethod = 'sendDocument';
+                fileFieldName = 'document';
+            }
+
+            formData.append(fileFieldName, file, file.name); 
+
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${selectedBot.token}/${apiMethod}`, {
+                    method: 'POST',
+                    body: formData 
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    showStatus(`Dosya (${file.name}) başarıyla gönderildi`, 'success');
+                    return true;
+                } else {
+                    showStatus(`Dosya gönderilemedi (${file.name}): ${data.description || 'Bilinmeyen hata'}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showStatus(`Dosya gönderirken hata oluştu (${file.name}): ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Enter tuşu ile mesaj gönderme
+        document.getElementById('messageText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Enter tuşu ile bot ekleme
+        document.getElementById('botToken').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addBot();
+            }
+        });
+
+        // Sayfa yüklendiğinde botları localStorage'dan yükle ve listeyi güncelle
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBotsFromLocalStorage();
+            updateBotList();
+        });
+    </script>
+</body>
+</html>
