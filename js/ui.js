@@ -8,6 +8,7 @@ export class UIManager {
             chatMessages: document.getElementById('chatMessages'),
             messageText: document.getElementById('messageText'),
             mediaFile: document.getElementById('mediaFile'),
+            selectFileBtn: document.getElementById('selectFileBtn'),
             selectedFileName: document.getElementById('selectedFileName'),
             clearMediaFileBtn: document.getElementById('clearMediaFileBtn'),
             chatHeader: document.getElementById('chatHeader'),
@@ -19,6 +20,14 @@ export class UIManager {
             sendLoader: document.getElementById('sendLoader'),
             sendText: document.getElementById('sendText')
         };
+        
+        // Initialize file selection button
+        if (this.elements.selectFileBtn && this.elements.mediaFile) {
+            this.elements.selectFileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.elements.mediaFile.click();
+            });
+        }
     }
 
     // Bot List Management
