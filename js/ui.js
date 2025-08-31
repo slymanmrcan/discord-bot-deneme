@@ -27,15 +27,8 @@ export class UIManager {
     }
 
     _initFileUpload() {
-        const { mediaFile, selectFileBtn, clearMediaFileBtn } = this.elements;
-        
-        if (!mediaFile || !selectFileBtn) return;
-        
-        // Click handler for file selection button
-        selectFileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            mediaFile.click();
-        });
+        const { mediaFile } = this.elements;
+        if (!mediaFile) return;
         
         // File selection change handler
         mediaFile.addEventListener('change', (e) => {
@@ -43,14 +36,15 @@ export class UIManager {
             this.updateMediaFileDisplay(file);
         });
         
-        // Clear file button handler
-        if (clearMediaFileBtn) {
-            clearMediaFileBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                mediaFile.value = '';
-                this.updateMediaFileDisplay(null);
-            });
-        }
+        // Add click handler to the document to clear file when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== mediaFile) {
+                // Update display without clearing the file
+                if (mediaFile.files.length > 0) {
+                    this.updateMediaFileDisplay(mediaFile.files[0]);
+                }
+            }
+        });
     }
 
     // Bot List Management
@@ -137,21 +131,21 @@ export class UIManager {
 
     // Media File Handling
     updateMediaFileDisplay(file) {
-        const { selectedFileName, clearMediaFileBtn, mediaFile } = this.elements;
+        const { selectedFileName, mediaFile } = this.elements;
         
-        if (!selectedFileName || !clearMediaFileBtn) return;
+        if (!selectedFileName || !mediaFile) return;
         
         if (file) {
             console.log('Displaying file:', file.name);
-            selectedFileName.textContent = file.name;
+            selectedFileName.textContent = `Seçili dosya: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
             selectedFileName.title = file.name;
-            clearMediaFileBtn.style.display = 'inline-flex';
+            selectedFileName.style.color = '#28a745';
         } else {
-            console.log('Clearing file selection');
-            if (mediaFile) mediaFile.value = '';
+            console.log('No file selected');
+            mediaFile.value = '';
             selectedFileName.textContent = 'Dosya seçilmedi';
             selectedFileName.title = '';
-            clearMediaFileBtn.style.display = 'none';
+            selectedFileName.style.color = '#555';
         }
     }
 
@@ -196,7 +190,15 @@ export class UIManager {
         }
         
         const file = fileInput.files[0];
-        console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
+        
+        // Check file size (max 20MB as per Telegram API limits)
+        const maxSize = 20 * 1024 * 1024; // 20MB
+        if (file.size > maxSize) {
+            this.showStatus(`Dosya çok büyük! Maksimum dosya boyutu: 20MB`, 'error');
+            return null;
+        }
+        
+        console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
         return file;
     }
 }
